@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
-	"flag"
 	"fmt"
 	"hw_1/uniq"
 	"io"
@@ -23,16 +21,11 @@ func scanText(istream io.Reader) ([]string, error) {
 	return text, err
 }
 
-func input() ([]string, error) {
+func input(inputAddress string) ([]string, error) {
 	var err error
 	var text []string
-	if flag.NArg() > 2 {
-		err = errors.New("too many arguments")
-	}
-	inputAddress := ""
 	var istream io.Reader
-	if flag.NArg() > 0 {
-		inputAddress = flag.Args()[0]
+	if len(inputAddress) != 0 {
 		file, err := os.Open(inputAddress)
 		if err != nil {
 			return text, err
@@ -49,12 +42,13 @@ func input() ([]string, error) {
 // main
 func main() {
 	var options uniq.Options
-	err := uniq.OptionsInit(&options)
+	var fileNames uniq.FileNames
+	err := uniq.OptionsInit(&options, &fileNames)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	text, err := input()
+	text, err := input(fileNames.InputAddress)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -62,7 +56,7 @@ func main() {
 
 	text, repeatArr := uniq.Uniq(text, options)
 
-	err = uniq.Output(text, repeatArr, options)
+	err = uniq.Output(text, repeatArr, options, fileNames.OutputAddress)
 	if err != nil {
 		fmt.Println(err)
 		return

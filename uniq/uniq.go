@@ -18,7 +18,12 @@ type Options struct {
 	NumChars        int
 }
 
-func OptionsInit(options *Options) error {
+type FileNames struct {
+	InputAddress  string
+	OutputAddress string
+}
+
+func OptionsInit(options *Options, fileNames *FileNames) error {
 	var err error
 	flag.BoolVar(&options.NumOfAppearance, "c", false, "number of line appearance")
 	flag.BoolVar(&options.Repeated, "d", false, "print only repeated lines")
@@ -33,6 +38,18 @@ func OptionsInit(options *Options) error {
 		err = errors.New("flags c, d, u can`t be together")
 		flag.Usage()
 	}
+
+	if flag.NArg() > 2 {
+		err = errors.New("too many arguments")
+		return err
+	}
+	if flag.NArg() > 0 {
+		fileNames.InputAddress = flag.Args()[0]
+	}
+	if flag.NArg() > 1 {
+		fileNames.OutputAddress = flag.Args()[1]
+	}
+
 	return err
 }
 
@@ -96,13 +113,10 @@ func withRepeat(text string, repeat int) string {
 	return strconv.Itoa(repeat) + " " + text
 }
 
-func Output(text []string, repeatArr []int, optons Options) error {
-
+func Output(text []string, repeatArr []int, optons Options, outputAddress string) error {
 	var err error
-	outputAddress := ""
 	var ostream io.Writer
-	if flag.NArg() > 1 {
-		outputAddress = flag.Args()[1]
+	if len(outputAddress) != 0 {
 		file, err := os.Create(outputAddress)
 		defer file.Close()
 		if err != nil {
