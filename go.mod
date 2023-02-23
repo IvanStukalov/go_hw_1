@@ -1,3 +1,3 @@
-module github.com/IvanStukalov/go_hw_1/tree/uniq
+module hw_1
 
 go 1.18
