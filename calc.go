@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"hw_1/Stack"
 	"os"
+	"strconv"
 )
 
 const SHIFT = 48
 
-func makePriority() map[byte]int {
-	return map[byte]int{
+func makePriority() map[rune]int {
+	return map[rune]int{
 		'(': 0,
 		'+': 1,
 		'-': 1,
@@ -55,6 +56,12 @@ func input() (string, error) {
 	for i := 0; i < len(text)-1; i++ {
 		if isOperator(text[i]) && isOperator(text[i+1]) {
 			err = errors.New("error: two or more operators can`t go one by one")
+		}
+		if text[i] == '(' && text[i+1] == ')' {
+			err = errors.New("error: brackets can`t be empty")
+		}
+		if text[i] == ')' && text[i+1] == '(' {
+			err = errors.New("error: there is no operator between brackets")
 		}
 	}
 
@@ -100,32 +107,76 @@ func parse(text string) string {
 			i--
 			postfix += " "
 		}
+
 		if isOperator(text[i]) {
 			if (i == 0 || text[i-1] == '(') && text[i] == '-' {
-				stack.Push('~')
+				stack.Push(rune('~'))
 			} else {
-				for stack.Len() > 0 && (operatorPriority[stack.Peek()] >= operatorPriority[text[i]]) {
-					postfix += string(stack.Pop()) + " "
+				for stack.Len() > 0 && (operatorPriority[stack.Peek().(rune)] >= operatorPriority[rune(text[i])]) {
+					postfix += string(stack.Pop().(rune)) + " "
 				}
-				stack.Push(text[i])
+				stack.Push(rune(text[i]))
 			}
 		} else if text[i] == '(' {
-			stack.Push(text[i])
+			stack.Push(rune(text[i]))
 		} else if text[i] == ')' {
 			for stack.Len() > 0 && stack.Peek() != '(' {
-				postfix += string(stack.Pop()) + " "
+				postfix += string(stack.Pop().(rune)) + " "
 			}
 			stack.Pop()
 		}
 	}
 	for stack.Len() > 0 {
-		postfix += string(stack.Pop()) + " "
+		postfix += string(stack.Pop().(rune)) + " "
 	}
 
 	return postfix
 }
 
-
+func calculate(text string) (float32, error) {
+	var err error
+	stack := Stack.New()
+	for i := 0; i < len(text); i++ {
+		if isDigit(text[i]) {
+			var str string
+			for ; i < len(text) && isDigit(text[i]); i++ {
+				str += string(text[i])
+			}
+			num, err := strconv.ParseFloat(str, 32)
+			if err != nil {
+				return 0.0, err
+			}
+			stack.Push(float32(num))
+		} else if isOperator(text[i]) || text[i] == '~' {
+			if text[i] == '~' {
+				last := stack.Pop().(float32)
+				stack.Push(float32(0 - last))
+			} else {
+				var first float32
+				var second float32
+				if stack.Len() != 0 {
+					second = stack.Pop().(float32)
+					first = stack.Pop().(float32)
+				}
+				switch text[i] {
+				case '+':
+					stack.Push(float32(first + second))
+				case '-':
+					stack.Push(float32(first - second))
+				case '*':
+					stack.Push(float32(first * second))
+				case '/':
+					if second == 0.0 {
+						err = errors.New("error: division by zero")
+						return 0.0, err
+					}
+					stack.Push(float32(first / second))
+				}
+			}
+		}
+	}
+	return stack.Pop().(float32), err
+}
 
 func main() {
 	text, err := input()
@@ -133,8 +184,12 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	a := parse(text)
-	fmt.Println(a)
-
+	parsed := parse(text)
+	fmt.Println(parsed)
+	res, err := calculate(parsed)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(res)
 }
