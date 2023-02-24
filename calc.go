@@ -185,7 +185,6 @@ func main() {
 		return
 	}
 	parsed := parse(text)
-	fmt.Println(parsed)
 	res, err := calculate(parsed)
 	if err != nil {
 		fmt.Println(err)
