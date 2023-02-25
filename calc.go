@@ -133,7 +133,7 @@ func parse(text string) string {
 	return postfix
 }
 
-func calculate(text string) (float32, error) {
+func calculate(text string) (float64, error) {
 	var err error
 	stack := Stack.New()
 	for i := 0; i < len(text); i++ {
@@ -142,40 +142,40 @@ func calculate(text string) (float32, error) {
 			for ; i < len(text) && isDigit(text[i]); i++ {
 				str += string(text[i])
 			}
-			num, err := strconv.ParseFloat(str, 32)
+			num, err := strconv.ParseFloat(str, 64)
 			if err != nil {
 				return 0.0, err
 			}
-			stack.Push(float32(num))
+			stack.Push(float64(num))
 		} else if isOperator(text[i]) || text[i] == '~' {
 			if text[i] == '~' {
-				last := stack.Pop().(float32)
-				stack.Push(float32(0 - last))
+				last := stack.Pop().(float64)
+				stack.Push(float64(0 - last))
 			} else {
-				var first float32
-				var second float32
+				var first float64
+				var second float64
 				if stack.Len() != 0 {
-					second = stack.Pop().(float32)
-					first = stack.Pop().(float32)
+					second = stack.Pop().(float64)
+					first = stack.Pop().(float64)
 				}
 				switch text[i] {
 				case '+':
-					stack.Push(float32(first + second))
+					stack.Push(float64(first + second))
 				case '-':
-					stack.Push(float32(first - second))
+					stack.Push(float64(first - second))
 				case '*':
-					stack.Push(float32(first * second))
+					stack.Push(float64(first * second))
 				case '/':
 					if second == 0.0 {
 						err = errors.New("error: division by zero")
 						return 0.0, err
 					}
-					stack.Push(float32(first / second))
+					stack.Push(float64(first / second))
 				}
 			}
 		}
 	}
-	return stack.Pop().(float32), err
+	return stack.Pop().(float64), err
 }
 
 func main() {
