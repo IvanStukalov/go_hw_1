@@ -46,6 +46,14 @@ func isDigit(char byte) bool {
 	return false
 }
 
+func isDot(char byte) bool {
+	if char == '.' {
+		return true
+	} else {
+		return false
+	}
+}
+
 func Input() (string, error) {
 	var text string
 	scanner := bufio.NewScanner(os.Stdin)
@@ -60,10 +68,13 @@ func Input() (string, error) {
 	if (len(text) != 0 && isOperator(text[0])) && text[0] != '-' {
 		err = errors.New("error: first character can`t be binary operator")
 	}
+	if len(text) != 0 && isDot(text[0]) {
+		err = errors.New("error: first character can`t be dot")
+	}
 
 	bracketsNum := 0
 	for i := range text {
-		if !isDigit(text[i]) && !isBracket(text[i]) && !isOperator(text[i]) {
+		if !isDigit(text[i]) && !isBracket(text[i]) && !isOperator(text[i]) && !isDot(text[i]) {
 			err = errors.New("error: invalid input")
 		}
 		if text[i] == '(' {
@@ -80,6 +91,15 @@ func Input() (string, error) {
 	for i := 0; i < len(text)-1; i++ {
 		if isOperator(text[i]) && isOperator(text[i+1]) {
 			err = errors.New("error: two or more operators can`t go one by one")
+		}
+		if isDot(text[i]) && isDot(text[i+1]) {
+			err = errors.New("error: two or more dots can`t go one by one")
+		}
+		if isDot(text[i]) && (isOperator(text[i]) || isBracket(text[i])) {
+			err = errors.New("error: operator can`t go after dot")
+		}
+		if (isOperator(text[i]) || isBracket(text[i])) && isDot(text[i+1]) {
+			err = errors.New("error: dot can`t go after operator")
 		}
 		if text[i] == '(' && text[i+1] == ')' {
 			err = errors.New("error: brackets can`t be empty")
@@ -100,7 +120,7 @@ func Parse(text string) string {
 	i := 0
 	for ; i < len(text); i++ {
 		if isDigit(text[i]) {
-			for ; i < len(text) && isDigit(text[i]); i++ {
+			for ; i < len(text) && (isDigit(text[i]) || isDot(text[i])); i++ {
 				postfix += string(text[i])
 			}
 			i--
@@ -140,7 +160,7 @@ func Calculate(text string) (float64, error) {
 	for i := 0; i < len(text); i++ {
 		if isDigit(text[i]) {
 			var str string
-			for ; i < len(text) && isDigit(text[i]); i++ {
+			for ; i < len(text) && (isDigit(text[i]) || isDot(text[i])); i++ {
 				str += string(text[i])
 			}
 			num, err := strconv.ParseFloat(str, 64)
