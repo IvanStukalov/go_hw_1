@@ -3,8 +3,6 @@ package uniq
 import (
 	"errors"
 	"flag"
-	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -27,17 +25,11 @@ func OptionsInit(options *Options, fileNames *FileNames) error {
 	var err error
 	flag.BoolVar(&options.NumOfAppearance, "c", false, "number of line appearance")
 	flag.BoolVar(&options.Repeated, "d", false, "print only repeated lines")
-	flag.BoolVar(&options.NotRepeated, "u", false, "print only not repeated lines")
+	flag.BoolVar(&options.NotRepeated, "u", false, "print only unique lines")
 	flag.BoolVar(&options.IgnoreCase, "i", false, "ignore letter case")
 	flag.IntVar(&options.NumFields, "f", 0, "skip first n fields in line")
 	flag.IntVar(&options.NumChars, "s", 0, "skip first n characters in line")
 	flag.Parse()
-	if options.NumOfAppearance && options.Repeated ||
-		options.NumOfAppearance && options.NotRepeated ||
-		options.Repeated && options.NotRepeated {
-		err = errors.New("flags c, d, u can`t be together")
-		flag.Usage()
-	}
 
 	if flag.NArg() > 2 {
 		err = errors.New("too many arguments")
@@ -83,8 +75,18 @@ func wordHandler(text string, options Options) string {
 	return text
 }
 
-func Uniq(text []string, options Options) ([]string, []int) {
+func Uniq(text []string, options Options) ([]string, error) {
 	var repeatArr []int
+	var result []string
+	var err error
+
+	if options.NumOfAppearance && options.Repeated ||
+		options.NumOfAppearance && options.NotRepeated ||
+		options.Repeated && options.NotRepeated {
+		err = errors.New("flags c, d, u can`t be together")
+		return result, err
+	}
+
 	repeat := 0
 	i := 0
 	for ; i < len(text)-1; i++ {
@@ -99,46 +101,22 @@ func Uniq(text []string, options Options) ([]string, []int) {
 	}
 	repeatArr = append(repeatArr, repeat+1)
 	text = append(text[:i-repeat+1], text[i+1:]...)
-	return text, repeatArr
-}
 
-// output
-func write(ostream io.Writer, line string) error {
-	_, err := io.WriteString(ostream, line)
-	_, err = io.WriteString(ostream, "\n")
-	return err
+	for i, line := range text {
+		switch {
+		case options.NumOfAppearance:
+			result = append(result, withRepeat(line, repeatArr[i]))
+		case options.Repeated && repeatArr[i] > 1:
+			result = append(result, line)
+		case options.NotRepeated && repeatArr[i] == 1:
+			result = append(result, line)
+		case !options.Repeated && !options.NotRepeated:
+			result = append(result, line)
+		}
+	}
+	return result, err
 }
 
 func withRepeat(text string, repeat int) string {
 	return strconv.Itoa(repeat) + " " + text
-}
-
-func Output(text []string, repeatArr []int, optons Options, outputAddress string) error {
-	var err error
-	var ostream io.Writer
-	if len(outputAddress) != 0 {
-		file, err := os.Create(outputAddress)
-		defer file.Close()
-		if err != nil {
-			return err
-		}
-		ostream = file
-	} else {
-		ostream = os.Stdout
-	}
-
-	for i, line := range text {
-		switch {
-		case optons.NumOfAppearance:
-			err = write(ostream, withRepeat(line, repeatArr[i]))
-		case optons.Repeated && repeatArr[i] > 1:
-			err = write(ostream, line)
-		case optons.NotRepeated && repeatArr[i] == 1:
-			err = write(ostream, line)
-		case !optons.Repeated && !optons.NotRepeated:
-			err = write(ostream, line)
-		}
-	}
-
-	return err
 }

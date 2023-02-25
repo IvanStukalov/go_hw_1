@@ -39,6 +39,32 @@ func input(inputAddress string) ([]string, error) {
 	return text, err
 }
 
+func write(ostream io.Writer, line string) error {
+	_, err := io.WriteString(ostream, line)
+	_, err = io.WriteString(ostream, "\n")
+	return err
+}
+
+func output(result []string, outputAddress string) error {
+	var err error
+	var ostream io.Writer
+	if len(outputAddress) != 0 {
+		file, err := os.Create(outputAddress)
+		defer file.Close()
+		if err != nil {
+			return err
+		}
+		ostream = file
+	} else {
+		ostream = os.Stdout
+	}
+
+	for _, line := range result {
+		write(ostream, line)
+	}
+	return err
+}
+
 // main
 func main() {
 	var options uniq.Options
@@ -54,9 +80,14 @@ func main() {
 		return
 	}
 
-	text, repeatArr := uniq.Uniq(text, options)
+	result, err := uniq.Uniq(text, options)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	err = uniq.Output(text, repeatArr, options, fileNames.OutputAddress)
+
+	err = output(result, fileNames.OutputAddress)
 	if err != nil {
 		fmt.Println(err)
 		return
