@@ -122,7 +122,9 @@ func Parse(text string) string {
 			for stack.Len() > 0 && stack.Peek() != '(' {
 				postfix += string(stack.Pop().(rune)) + " "
 			}
-			stack.Pop()
+			if stack.Len() != 0 {
+				stack.Pop()
+			}
 		}
 	}
 	for stack.Len() > 0 {
@@ -155,6 +157,8 @@ func Calculate(text string) (float64, error) {
 				var second float64
 				if stack.Len() != 0 {
 					second = stack.Pop().(float64)
+				}
+				if stack.Len() != 0 {
 					first = stack.Pop().(float64)
 				}
 				switch text[i] {
@@ -173,6 +177,9 @@ func Calculate(text string) (float64, error) {
 				}
 			}
 		}
+	}
+	if stack.Len() == 0 {
+		return 0.0, err
 	}
 	return stack.Pop().(float64), err
 }
