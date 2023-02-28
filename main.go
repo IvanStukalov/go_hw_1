@@ -24,44 +24,37 @@ func scanText(istream io.Reader) ([]string, error) {
 func input(inputAddress string) ([]string, error) {
 	var err error
 	var text []string
-	var istream io.Reader
 	if len(inputAddress) != 0 {
 		file, err := os.Open(inputAddress)
 		if err != nil {
 			return text, err
 		}
 		defer file.Close()
-		istream = file
+		text, err = scanText(file)
 	} else {
-		istream = os.Stdin
+		text, err = scanText(os.Stdin)
 	}
-	text, err = scanText(istream)
 	return text, err
 }
 
-func write(ostream io.Writer, line string) error {
-	_, err := io.WriteString(ostream, line)
-	_, err = io.WriteString(ostream, "\n")
+func write(ostream io.Writer, text []string) error {
+	var err error
+	for _, line := range text {
+		_, err = io.WriteString(ostream, line)
+		_, err = io.WriteString(ostream, "\n")
+	}
 	return err
 }
 
 func output(result []string, outputAddress string) error {
 	var err error
-	var ostream io.Writer
 	if len(outputAddress) != 0 {
 		file, err := os.Create(outputAddress)
 		defer file.Close()
-		if err != nil {
-			return err
-		}
-		ostream = file
-	} else {
-		ostream = os.Stdout
+		write(file, result)
+		return err
 	}
-
-	for _, line := range result {
-		write(ostream, line)
-	}
+	write(os.Stdout, result)
 	return err
 }
 
@@ -85,7 +78,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
 
 	err = output(result, fileNames.OutputAddress)
 	if err != nil {

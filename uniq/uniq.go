@@ -35,13 +35,8 @@ func OptionsInit(options *Options, fileNames *FileNames) error {
 		err = errors.New("too many arguments")
 		return err
 	}
-	if flag.NArg() > 0 {
-		fileNames.InputAddress = flag.Args()[0]
-	}
-	if flag.NArg() > 1 {
-		fileNames.OutputAddress = flag.Args()[1]
-	}
-
+	fileNames.InputAddress = flag.Arg(0)
+	fileNames.OutputAddress = flag.Arg(1)
 	return err
 }
 
@@ -106,11 +101,15 @@ func Uniq(text []string, options Options) ([]string, error) {
 		switch {
 		case options.NumOfAppearance:
 			result = append(result, withRepeat(line, repeatArr[i]))
-		case options.Repeated && repeatArr[i] > 1:
-			result = append(result, line)
-		case options.NotRepeated && repeatArr[i] == 1:
-			result = append(result, line)
-		case !options.Repeated && !options.NotRepeated:
+		case options.Repeated:
+			if repeatArr[i] > 1 {
+				result = append(result, line)
+			}
+		case options.NotRepeated:
+			if repeatArr[i] == 1 {
+				result = append(result, line)
+			}
+		default:
 			result = append(result, line)
 		}
 	}
