@@ -7,7 +7,7 @@ import (
 )
 
 func TestUnique(t *testing.T) {
-	var TestsForSuccess = []struct {
+	var TestsForUniqFunc = []struct {
 		input   []string
 		options Options
 		output  []string
@@ -153,10 +153,66 @@ func TestUnique(t *testing.T) {
 				"Thanks.",
 				"I love music of Kartik."}},
 	}
-
-	for _, test := range TestsForSuccess {
+	for _, test := range TestsForUniqFunc {
 		res, err := Uniq(test.input, test.options)
 		require.Equal(t, nil, err)
+		require.Equal(t, test.output, res)
+	}
+
+	var TestSkipFields = []struct {
+		input     string
+		numFields int
+		output    string
+	}{
+		{"I love music of Kartik.", 0, "I love music of Kartik."},
+		{"I love music of Kartik.", 1, "love music of Kartik."},
+		{"I love music of Kartik.", 2, "music of Kartik."},
+	}
+	for _, test := range TestSkipFields {
+		res := skipFields(test.input, test.numFields)
+		require.Equal(t, test.output, res)
+	}
+
+	var TestSkipChars = []struct {
+		input    string
+		numChars int
+		output   string
+	}{
+		{"I love music of Kartik.", 0, "I love music of Kartik."},
+		{"I love music of Kartik.", 1, " love music of Kartik."},
+		{"I love music of Kartik.", 2, "love music of Kartik."},
+		{"I love music of Kartik.", 4, "ve music of Kartik."},
+	}
+	for _, test := range TestSkipChars {
+		res := skipChars(test.input, test.numChars)
+		require.Equal(t, test.output, res)
+	}
+
+	var TestWordHandler = []struct {
+		input   string
+		options Options
+		output  string
+	}{
+		{"I love MUSIC of Kartik.", Options{false, false, false, true, 0, 0}, "i love music of kartik."},
+		{"I love music of Kartik.", Options{false, false, false, false, 2, 0}, "music of Kartik."},
+		{"I love music of Kartik.", Options{false, false, false, false, 0, 3}, "ove music of Kartik."},
+		{"I love MUSIC of Kartik.", Options{false, false, false, true, 1, 2}, "ve music of kartik."},
+	}
+	for _, test := range TestWordHandler {
+		res := wordHandler(test.input, test.options)
+		require.Equal(t, test.output, res)
+	}
+
+	var TestWithRepeat = []struct {
+		input  string
+		repeat int
+		output string
+	}{
+		{"I love music of Kartik.", 1, "1 I love music of Kartik."},
+		{"I love music of Kartik.", 2, "2 I love music of Kartik."},
+	}
+	for _, test := range TestWithRepeat {
+		res := withRepeat(test.input, test.repeat)
 		require.Equal(t, test.output, res)
 	}
 
@@ -171,7 +227,7 @@ func TestUnique(t *testing.T) {
 			"I love music of Kartik."},
 			Options{true, true, false, false, 0, 0},
 			[]string{}},
-		
+
 		{[]string{
 			"I love music.",
 			"I love music.",
@@ -185,7 +241,7 @@ func TestUnique(t *testing.T) {
 			"I love music of Kartik."},
 			Options{false, true, true, false, 0, 0},
 			[]string{}},
-		
+
 		{[]string{
 			"I love music.",
 			"I love music.",
@@ -193,7 +249,6 @@ func TestUnique(t *testing.T) {
 			Options{true, true, true, false, 0, 0},
 			[]string{}},
 	}
-
 	for _, test := range TestForError {
 		_, err := Uniq(test.input, test.options)
 		require.Error(t, err)
