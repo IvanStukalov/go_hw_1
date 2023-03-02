@@ -12,8 +12,7 @@ func main() {
 		return
 	}
 	parsed := calculator.Parse(text)
-	fmt.Println(parsed)
-	
+
 	res, err := calculator.Calculate(parsed)
 	if err != nil {
 		fmt.Println(err)
