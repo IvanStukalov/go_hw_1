@@ -3,9 +3,11 @@ package calculator
 import (
 	"bufio"
 	"errors"
-	"hw_1/Stack"
+	"fmt"
+	"hw_1/stack"
 	"os"
 	"strconv"
+	"unicode"
 )
 
 const SHIFT = 48
@@ -22,60 +24,32 @@ func makePriority() map[rune]int {
 }
 
 func isBracket(char byte) bool {
-	if char == '(' || char == ')' {
-		return true
-	} else {
-		return false
-	}
+	return char == '(' || char == ')'
 }
 
 func isOperator(char byte) bool {
-	if char == '+' || char == '-' || char == '*' || char == '/' {
-		return true
-	} else {
-		return false
-	}
-}
-
-func isDigit(char byte) bool {
-	for i := 0; i < 10; i++ {
-		if int(char)-SHIFT == i {
-			return true
-		}
-	}
-	return false
+	return char == '+' || char == '-' || char == '*' || char == '/'
 }
 
 func isDot(char byte) bool {
-	if char == '.' {
-		return true
-	} else {
-		return false
-	}
+	return char == '.'
 }
 
-func Input() (string, error) {
-	var text string
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	text = scanner.Text()
-	err := scanner.Err()
-
+func validate(text string) (error) {
 	if len(text) == 0 {
-		err = errors.New("error: empty string")
+		return fmt.Errorf("error: empty string")
 	}
-
 	if (len(text) != 0 && isOperator(text[0])) && text[0] != '-' {
-		err = errors.New("error: first character can`t be binary operator")
+		return fmt.Errorf("error: first character can`t be binary operator")
 	}
 	if len(text) != 0 && isDot(text[0]) {
-		err = errors.New("error: first character can`t be dot")
+		return fmt.Errorf("error: first character can`t be dot")
 	}
 
 	bracketsNum := 0
 	for i := range text {
-		if !isDigit(text[i]) && !isBracket(text[i]) && !isOperator(text[i]) && !isDot(text[i]) {
-			err = errors.New("error: invalid input")
+		if !unicode.IsDigit(rune(text[i])) && !isBracket(text[i]) && !isOperator(text[i]) && !isDot(text[i]) {
+			return fmt.Errorf("error: invalid input")
 		}
 		if text[i] == '(' {
 			bracketsNum++
@@ -85,42 +59,54 @@ func Input() (string, error) {
 		}
 	}
 	if bracketsNum != 0 {
-		err = errors.New("error: number of opening brackets not equal to number of closening brakets")
+		return fmt.Errorf("error: number of opening brackets not equal to number of closening brakets")
 	}
 
 	for i := 0; i < len(text)-1; i++ {
 		if isOperator(text[i]) && isOperator(text[i+1]) {
-			err = errors.New("error: two or more operators can`t go one by one")
+			return fmt.Errorf("error: two or more operators can`t go one by one")
 		}
 		if isDot(text[i]) && isDot(text[i+1]) {
-			err = errors.New("error: two or more dots can`t go one by one")
+			return fmt.Errorf("error: two or more dots can`t go one by one")
 		}
 		if isDot(text[i]) && (isOperator(text[i]) || isBracket(text[i])) {
-			err = errors.New("error: operator can`t go after dot")
+			return fmt.Errorf("error: operator can`t go after dot")
 		}
 		if (isOperator(text[i]) || isBracket(text[i])) && isDot(text[i+1]) {
-			err = errors.New("error: dot can`t go after operator")
+			return fmt.Errorf("error: dot can`t go after operator")
 		}
 		if text[i] == '(' && text[i+1] == ')' {
-			err = errors.New("error: brackets can`t be empty")
+			return fmt.Errorf("error: brackets can`t be empty")
 		}
 		if text[i] == ')' && text[i+1] == '(' {
-			err = errors.New("error: there is no operator between brackets")
+			return fmt.Errorf("error: there is no operator between brackets")
 		}
 	}
+	return nil
+}
 
+func Input() (string, error) {
+	var text string
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	text = scanner.Text()
+	err := scanner.Err()
+	if err != nil {
+		return text, err	
+	}
+	err = validate(text)
 	return text, err
 }
 
 func Parse(text string) string {
 	var postfix string
-	stack := Stack.New()
+	stack := stack.New()
 	operatorPriority := makePriority()
 
 	i := 0
 	for ; i < len(text); i++ {
-		if isDigit(text[i]) {
-			for ; i < len(text) && (isDigit(text[i]) || isDot(text[i])); i++ {
+		if unicode.IsDigit(rune(text[i])) {
+			for ; i < len(text) && (unicode.IsDigit(rune(text[i])) || isDot(text[i])); i++ {
 				postfix += string(text[i])
 			}
 			i--
@@ -142,9 +128,7 @@ func Parse(text string) string {
 			for stack.Len() > 0 && stack.Peek() != '(' {
 				postfix += string(stack.Pop().(rune)) + " "
 			}
-			if stack.Len() != 0 {
-				stack.Pop()
-			}
+			stack.Pop()
 		}
 	}
 	for stack.Len() > 0 {
@@ -156,11 +140,11 @@ func Parse(text string) string {
 
 func Calculate(text string) (float64, error) {
 	var err error
-	stack := Stack.New()
+	stack := stack.New()
 	for i := 0; i < len(text); i++ {
-		if isDigit(text[i]) {
+		if unicode.IsDigit(rune(text[i])) {
 			var str string
-			for ; i < len(text) && (isDigit(text[i]) || isDot(text[i])); i++ {
+			for ; i < len(text) && (unicode.IsDigit(rune(text[i])) || isDot(text[i])); i++ {
 				str += string(text[i])
 			}
 			num, err := strconv.ParseFloat(str, 64)
@@ -173,21 +157,15 @@ func Calculate(text string) (float64, error) {
 				last := stack.Pop().(float64)
 				stack.Push(float64(0 - last))
 			} else {
-				var first float64
-				var second float64
-				if stack.Len() != 0 {
-					second = stack.Pop().(float64)
-				}
-				if stack.Len() != 0 {
-					first = stack.Pop().(float64)
-				}
+				second := stack.Pop().(float64)
+				first := stack.Pop().(float64)
 				switch text[i] {
 				case '+':
-					stack.Push(float64(first + second))
+					stack.Push(first + second)
 				case '-':
-					stack.Push(float64(first - second))
+					stack.Push(first - second)
 				case '*':
-					stack.Push(float64(first * second))
+					stack.Push(first * second)
 				case '/':
 					if second == 0.0 {
 						err = errors.New("error: division by zero")
@@ -197,9 +175,6 @@ func Calculate(text string) (float64, error) {
 				}
 			}
 		}
-	}
-	if stack.Len() == 0 {
-		return 0.0, err
 	}
 	return stack.Pop().(float64), err
 }
