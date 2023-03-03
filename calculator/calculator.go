@@ -1,16 +1,12 @@
 package calculator
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"hw_1/stack"
-	"os"
 	"strconv"
 	"unicode"
 )
-
-const SHIFT = 48
 
 func makePriority() map[rune]int {
 	return map[rune]int{
@@ -69,7 +65,7 @@ func validate(text string) error {
 		if isDot(text[i]) && isDot(text[i+1]) {
 			return fmt.Errorf("error: two or more dots can`t go one by one")
 		}
-		if isDot(text[i]) && (isOperator(text[i]) || isBracket(text[i])) {
+		if isDot(text[i]) && (isOperator(text[i+1]) || isBracket(text[i+1])) {
 			return fmt.Errorf("error: operator can`t go after dot")
 		}
 		if (isOperator(text[i]) || isBracket(text[i])) && isDot(text[i+1]) {
@@ -85,20 +81,12 @@ func validate(text string) error {
 	return nil
 }
 
-func Input() (string, error) {
-	var text string
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	text = scanner.Text()
-	err := scanner.Err()
+func Parse(text string) (string, error) {
+	err := validate(text)
 	if err != nil {
 		return text, err
 	}
-	err = validate(text)
-	return text, err
-}
 
-func Parse(text string) string {
 	var postfix string
 	stack := stack.New()
 	operatorPriority := makePriority()
@@ -135,7 +123,7 @@ func Parse(text string) string {
 		postfix += string(stack.Pop().(rune)) + " "
 	}
 
-	return postfix
+	return postfix, err
 }
 
 func Calculate(text string) (float64, error) {
@@ -151,7 +139,7 @@ func Calculate(text string) (float64, error) {
 			if err != nil {
 				return 0.0, err
 			}
-			stack.Push(float64(num))
+			stack.Push(num)
 		} else if isOperator(text[i]) || text[i] == '~' {
 			if text[i] == '~' {
 
@@ -160,7 +148,7 @@ func Calculate(text string) (float64, error) {
 					return 0.0, fmt.Errorf("error: number is not float64")
 				}
 
-				stack.Push(float64(0 - last))
+				stack.Push(0.0 - last)
 			} else {
 
 				second, ok := stack.Pop().(float64)
@@ -185,7 +173,7 @@ func Calculate(text string) (float64, error) {
 						err = errors.New("error: division by zero")
 						return 0.0, err
 					}
-					stack.Push(float64(first / second))
+					stack.Push(first / second)
 				}
 			}
 		}

@@ -35,7 +35,8 @@ func TestCalculator(t *testing.T) {
 	}
 
 	for _, test := range TestsForSuccess {
-		res, err := Calculate(Parse(test.input))
+		text, err := Parse(test.input)
+		res, err := Calculate(text)
 		require.Equal(t, nil, err)
 		require.Equal(t, test.output, res)
 	}
@@ -62,7 +63,8 @@ func TestCalculator(t *testing.T) {
 	}
 
 	for _, test := range TestForError {
-		res, err := Calculate(Parse(test.input))
+		text, err := Parse(test.input)
+		res, err := Calculate(text)
 		require.Error(t, fmt.Errorf("wrong data"), err, fmt.Sprintf("Calculate(%s) = %f, expected error",
 			test.input, res))
 	}
