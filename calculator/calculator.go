@@ -35,7 +35,7 @@ func isDot(char byte) bool {
 	return char == '.'
 }
 
-func validate(text string) (error) {
+func validate(text string) error {
 	if len(text) == 0 {
 		return fmt.Errorf("error: empty string")
 	}
@@ -92,7 +92,7 @@ func Input() (string, error) {
 	text = scanner.Text()
 	err := scanner.Err()
 	if err != nil {
-		return text, err	
+		return text, err
 	}
 	err = validate(text)
 	return text, err
@@ -154,11 +154,25 @@ func Calculate(text string) (float64, error) {
 			stack.Push(float64(num))
 		} else if isOperator(text[i]) || text[i] == '~' {
 			if text[i] == '~' {
-				last := stack.Pop().(float64)
+
+				last, ok := stack.Pop().(float64)
+				if !ok {
+					return 0.0, fmt.Errorf("error: number is not float64")
+				}
+
 				stack.Push(float64(0 - last))
 			} else {
-				second := stack.Pop().(float64)
-				first := stack.Pop().(float64)
+
+				second, ok := stack.Pop().(float64)
+				if !ok {
+					return 0.0, fmt.Errorf("error: number is not float64")
+				}
+
+				first, ok := stack.Pop().(float64)
+				if !ok {
+					return 0.0, fmt.Errorf("error: number is not float64")
+				}
+
 				switch text[i] {
 				case '+':
 					stack.Push(first + second)
@@ -176,5 +190,9 @@ func Calculate(text string) (float64, error) {
 			}
 		}
 	}
-	return stack.Pop().(float64), err
+	res, ok := stack.Pop().(float64)
+	if !ok {
+		return 0.0, fmt.Errorf("error: number is not float64")
+	}
+	return res, err
 }
