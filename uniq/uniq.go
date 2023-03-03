@@ -70,14 +70,22 @@ func wordHandler(text string, options Options) string {
 	return text
 }
 
+func cduFlagHandler(options Options) bool {
+	if options.NumOfAppearance && options.Repeated ||
+		options.NumOfAppearance && options.NotRepeated ||
+		options.Repeated && options.NotRepeated {
+			flag.Usage()
+			return true
+		}
+		return false
+}
+
 func Uniq(text []string, options Options) ([]string, error) {
 	var repeatArr []int
 	var result []string
 	var err error
 
-	if options.NumOfAppearance && options.Repeated ||
-		options.NumOfAppearance && options.NotRepeated ||
-		options.Repeated && options.NotRepeated {
+	if cduFlagHandler(options) {
 		err = errors.New("flags c, d, u can`t be together")
 		return result, err
 	}

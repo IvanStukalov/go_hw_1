@@ -24,16 +24,15 @@ func scanText(istream io.Reader) ([]string, error) {
 func input(inputAddress string) ([]string, error) {
 	var err error
 	var text []string
+	file := os.Stdin
 	if len(inputAddress) != 0 {
-		file, err := os.Open(inputAddress)
+		file, err = os.Open(inputAddress)
 		if err != nil {
 			return text, err
 		}
 		defer file.Close()
-		text, err = scanText(file)
-	} else {
-		text, err = scanText(os.Stdin)
 	}
+	text, err = scanText(file)
 	return text, err
 }
 
@@ -48,13 +47,15 @@ func write(ostream io.Writer, text []string) error {
 
 func output(result []string, outputAddress string) error {
 	var err error
+	file := os.Stdout
 	if len(outputAddress) != 0 {
-		file, err := os.Create(outputAddress)
+		file, err = os.Create(outputAddress)
+		if err != nil {
+			return err
+		}
 		defer file.Close()
-		write(file, result)
-		return err
 	}
-	write(os.Stdout, result)
+	err = write(file, result)
 	return err
 }
 
