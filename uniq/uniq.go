@@ -21,25 +21,6 @@ type FileNames struct {
 	OutputAddress string
 }
 
-func OptionsInit(options *Options, fileNames *FileNames) error {
-	var err error
-	flag.BoolVar(&options.NumOfAppearance, "c", false, "number of line appearance")
-	flag.BoolVar(&options.Repeated, "d", false, "print only repeated lines")
-	flag.BoolVar(&options.NotRepeated, "u", false, "print only unique lines")
-	flag.BoolVar(&options.IgnoreCase, "i", false, "ignore letter case")
-	flag.IntVar(&options.NumFields, "f", 0, "skip first n fields in line")
-	flag.IntVar(&options.NumChars, "s", 0, "skip first n characters in line")
-	flag.Parse()
-
-	if flag.NArg() > 2 {
-		err = errors.New("too many arguments")
-		return err
-	}
-	fileNames.InputAddress = flag.Arg(0)
-	fileNames.OutputAddress = flag.Arg(1)
-	return err
-}
-
 // uniq
 func skipFields(text string, numFields int) string {
 	lineArr := strings.Fields(text)
@@ -74,16 +55,20 @@ func cduFlagHandler(options Options) bool {
 	if options.NumOfAppearance && options.Repeated ||
 		options.NumOfAppearance && options.NotRepeated ||
 		options.Repeated && options.NotRepeated {
-			flag.Usage()
-			return true
-		}
-		return false
+		flag.Usage()
+		return true
+	}
+	return false
 }
 
 func Uniq(text []string, options Options) ([]string, error) {
 	var repeatArr []int
 	var result []string
 	var err error
+
+	if len(text) == 0 {
+		return text, errors.New("error: input is empty")
+	}
 
 	if cduFlagHandler(options) {
 		err = errors.New("flags c, d, u can`t be together")
@@ -103,6 +88,7 @@ func Uniq(text []string, options Options) ([]string, error) {
 		}
 	}
 	repeatArr = append(repeatArr, repeat+1)
+
 	text = append(text[:i-repeat+1], text[i+1:]...)
 
 	for i, line := range text {

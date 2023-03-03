@@ -248,6 +248,10 @@ func TestUnique(t *testing.T) {
 			"I love music of Kartik."},
 			Options{true, true, true, false, 0, 0},
 			[]string{}},
+
+		{[]string{},
+			Options{false, false, false, false, 0, 0},
+			[]string{}},
 	}
 	for _, test := range TestForError {
 		_, err := Uniq(test.input, test.options)
