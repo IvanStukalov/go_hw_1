@@ -9,4 +9,5 @@
 2. Запускаем `go run main.go -c input.txt output.txt`
 
 Либо читаем прямо из терминала:
+
 `echo -e небо\\nоблака\\nоблака\\nоблака\\nсолнце\\nзвезды | go run main.go -c`
